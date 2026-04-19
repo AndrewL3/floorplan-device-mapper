@@ -21,7 +21,7 @@ export interface Wall {
     start: Point;
     end: Point;
     material: WallMaterial;
-    attentuationDb: number;
+    attenuationDb: number;
 }
 
 export type Tool = 'select' | 'draw-wall' | 'calibrate';
