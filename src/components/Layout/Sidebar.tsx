@@ -31,29 +31,50 @@ const Placeholder = styled.div`
   opacity: 0.4;
 `;
 
-export function Sidebar() {
-    return (
-        <Aside>
-            <Section>
-                <Label>Floorplan</Label>
-                <Placeholder>Upload</Placeholder>
-            </Section>
-            <Section raised>
-                <Label>Scale</Label>
-                <Placeholder>Not calibrated</Placeholder>
-            </Section>
-            <Section>
-                <Label>Tools</Label>
-                <Placeholder>Tool buttons</Placeholder>
-            </Section>
-            <Section raised>
-                <Label>Wall Material</Label>
-                <Placeholder>Material dropdown</Placeholder>
-            </Section>
-            <Section style={{ flex: 1}}>
-                <Label>Devices</Label>
-                <Placeholder>Device palette</Placeholder>
-            </Section>
-        </Aside>
-    );
+const UploadButton = styled.button`
+  width: 100%;
+  padding: ${({ theme }) => theme.space.sm} ${({ theme }) => theme.space.md};
+  background: ${({ theme }) => theme.colors.surfaceContainer};
+  border: 1px solid ${({ theme }) => theme.colors.outlineVariant};
+  border-radius: ${({ theme }) => theme.radius.md};
+  color: ${({ theme }) => theme.colors.onSurfaceVariant};
+  font-family: ${({ theme }) => theme.fonts.sans};
+  font-size: ${({ theme }) => theme.fontSize.bodySmall};
+  cursor: pointer;
+  transition: background ${({ theme }) => theme.transition.fast};
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.surfaceContainerHigh};
+  }
+`;
+
+interface SidebarProps {
+  onUpload: () => void;
+}
+
+export function Sidebar({ onUpload }: SidebarProps) {
+  return (
+    <Aside>
+      <Section>
+        <Label>Floorplan</Label>
+        <UploadButton onClick={onUpload}>Upload floorplan</UploadButton>
+      </Section>
+      <Section raised>
+        <Label>Scale</Label>
+        <Placeholder>Not calibrated</Placeholder>
+      </Section>
+      <Section>
+        <Label>Tools</Label>
+        <Placeholder>Tool buttons</Placeholder>
+      </Section>
+      <Section raised>
+        <Label>Wall Material</Label>
+        <Placeholder>Material dropdown</Placeholder>
+      </Section>
+      <Section style={{ flex: 1 }}>
+        <Label>Devices</Label>
+        <Placeholder>Device palette</Placeholder>
+      </Section>
+    </Aside>
+  );
 }
