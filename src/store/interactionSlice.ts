@@ -58,6 +58,7 @@ export const createInteractionSlice: StateCreator<
     const { calibrationPoints, setScale, setActiveTool } = get();
     if (calibrationPoints.length !== 2 || distanceMeters <= 0) return;
     const pixelDistance = distance(calibrationPoints[0], calibrationPoints[1]);
+    if (pixelDistance <= 0) return;
     const pixelsPerMeter = pixelDistance / distanceMeters;
     setScale({ pixelsPerMeter });
     setActiveTool("select");

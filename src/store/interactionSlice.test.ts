@@ -61,6 +61,13 @@ describe("interactionSlice", () => {
       store.getState().submitCalibration(0);
       expect(store.getState().scale).toBeNull();
     });
+
+    it("rejects coincident calibration points", () => {
+      store.getState().addCalibrationPoint({ x: 50, y: 50 });
+      store.getState().addCalibrationPoint({ x: 50, y: 50 });
+      store.getState().submitCalibration(5);
+      expect(store.getState().scale).toBeNull();
+    });
   });
 
   describe("wall drawing", () => {

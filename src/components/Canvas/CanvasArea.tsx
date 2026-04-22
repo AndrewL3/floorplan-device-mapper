@@ -73,7 +73,7 @@ export const CanvasArea = forwardRef<CanvasAreaHandle>(
         setDragCounter(0);
 
         const deviceType = e.dataTransfer.getData("application/device-type");
-        if (deviceType) {
+        if (deviceType && floorplan) {
           const container = containerRef.current;
           if (!container) return;
           const rect = container.getBoundingClientRect();
