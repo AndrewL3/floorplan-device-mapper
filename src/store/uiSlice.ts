@@ -21,6 +21,10 @@ export interface UiActions {
   setZoom: (zoom: number) => void;
   setPan: (pan: { x: number; y: number }) => void;
   fitToView: (stageWidth: number, stageHeight: number) => void;
+  setActiveTool: (tool: Tool) => void;
+  setActiveWallMaterial: (material: WallMaterial) => void;
+  setScale: (scale: Scale) => void;
+  setSelectedDeviceId: (id: string | null) => void;
 }
 export type UiSlice = UiState & UiActions;
 
@@ -52,4 +56,8 @@ export const createUiSlice: StateCreator<UiSlice> = (set, get) => ({
     };
     set({ zoom, pan });
   },
+  setActiveTool: (activeTool) => set({ activeTool }),
+  setActiveWallMaterial: (activeWallMaterial) => set({ activeWallMaterial }),
+  setScale: (scale) => set({ scale }),
+  setSelectedDeviceId: (selectedDeviceId) => set({ selectedDeviceId }),
 });

@@ -14,6 +14,9 @@ import { EmptyState } from "./EmptyState";
 import { FloorplanStage } from "./FloorplanStage";
 import { ZoomControls } from "./ZoomControls";
 import { DropOverlay } from "./DropOverlay";
+import { clientToStage } from "../../utils/coords";
+import type { DeviceType } from "../../types";
+import { CalibrationOverlay } from "./CalibrationOverlay";
 
 const Container = styled.div<{ $cursor: string }>`
   flex: 1;
@@ -68,6 +71,24 @@ export const CanvasArea = forwardRef<CanvasAreaHandle>(
       (e: React.DragEvent) => {
         e.preventDefault();
         setDragCounter(0);
+
+        const deviceType = e.dataTransfer.getData("application/device-type");
+        if (deviceType) {
+          const container = containerRef.current;
+          if (!container) return;
+          const rect = container.getBoundingClientRect();
+          const { pan, zoom, addDevice } = useStore.getState();
+          const stagePoint = clientToStage(
+            e.clientX,
+            e.clientY,
+            rect,
+            pan,
+            zoom,
+          );
+          addDevice(deviceType as DeviceType, stagePoint);
+          return;
+        }
+
         const file = e.dataTransfer.files[0];
         if (file) upload(file, containerSize.width, containerSize.height);
       },
@@ -124,6 +145,7 @@ export const CanvasArea = forwardRef<CanvasAreaHandle>(
         )}
 
         <DropOverlay visible={dragCounter > 0} />
+        <CalibrationOverlay />
       </Container>
     );
   },

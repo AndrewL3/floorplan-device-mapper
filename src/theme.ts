@@ -21,6 +21,12 @@ export const theme = {
     dead: "#FF6B6B",
     errorText: "#FFB4AB",
     errorContainer: "#93000A",
+
+    accessPoint: "#448FFD",
+    wallDrywall: "#B0B0B0",
+    wallGlass: "#4DD0E1",
+    wallConcrete: "#A1887F",
+    wallMetal: "#78909C",
   },
 
   fonts: {
@@ -77,6 +83,24 @@ export const theme = {
   transition: {
     fast: "100ms linear",
     default: "120ms ease-out",
+  },
+
+  wall: {
+    strokeWidth: {
+      drywall: 2,
+      glass: 2,
+      concrete: 4,
+      metal: 6,
+    },
+  },
+
+  device: {
+    badgeRadius: 14,
+    iconScale: 14 / 24,
+    iconViewBox: 24,
+    strokeWidth: 1.5,
+    selectedStrokeWidth: 2,
+    selectedStrokeColor: "#FFFFFF",
   },
 } as const;
 
