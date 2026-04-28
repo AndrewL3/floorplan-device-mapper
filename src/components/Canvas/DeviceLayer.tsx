@@ -1,7 +1,10 @@
+import { type MutableRefObject, useCallback } from "react";
 import { Layer, Group, Circle, Path } from "react-konva";
+import type Konva from "konva";
 import { useStore } from "../../store";
 import { theme } from "../../theme";
-import type { DeviceType } from "../../types";
+import { nearestWallSnap } from "../../utils/snap";
+import type { DeviceType, SnapGuideState } from "../../types";
 
 interface DeviceVisual {
   color: string;
@@ -33,6 +36,13 @@ const DEVICE_VISUALS: Record<DeviceType, DeviceVisual> = {
   },
 };
 
+const WALL_COLORS: Record<string, string> = {
+  drywall: theme.colors.wallDrywall,
+  glass: theme.colors.wallGlass,
+  concrete: theme.colors.wallConcrete,
+  metal: theme.colors.wallMetal,
+};
+
 const {
   badgeRadius,
   iconScale,
@@ -43,10 +53,38 @@ const {
 } = theme.device;
 const iconOffset = iconViewBox / 2;
 
-export function DeviceLayer() {
+interface DeviceLayerProps {
+  snapGuideRef: MutableRefObject<SnapGuideState>;
+}
+
+export function DeviceLayer({ snapGuideRef }: DeviceLayerProps) {
   const devices = useStore((s) => s.devices);
+  const walls = useStore((s) => s.walls);
   const selectedId = useStore((s) => s.selectedDeviceId);
+  const activeTool = useStore((s) => s.activeTool);
   const setSelectedDeviceId = useStore((s) => s.setSelectedDeviceId);
+  const updateDevice = useStore((s) => s.updateDevice);
+
+  const isDraggable = activeTool === "select";
+
+  const handleDragEnd = useCallback(
+    (deviceId: string, e: Konva.KonvaEventObject<DragEvent>) => {
+      e.cancelBubble = true;
+      const { zoom, pan } = useStore.getState();
+      const abs = e.target.absolutePosition();
+      const worldPos = {
+        x: (abs.x - pan.x) / zoom,
+        y: (abs.y - pan.y) / zoom,
+      };
+      updateDevice(deviceId, { position: worldPos });
+      snapGuideRef.current.wall = null;
+      snapGuideRef.current.snapPoint = null;
+      const { wallLineNode, snapPointNode } = snapGuideRef.current;
+      if (wallLineNode) wallLineNode.visible(false);
+      if (snapPointNode) snapPointNode.visible(false);
+    },
+    [updateDevice, snapGuideRef],
+  );
 
   return (
     <Layer>
@@ -59,6 +97,54 @@ export function DeviceLayer() {
             key={device.id}
             x={device.position.x}
             y={device.position.y}
+            draggable={isDraggable}
+            dragBoundFunc={(pos) => {
+              const { zoom, pan } = useStore.getState();
+              const worldPos = {
+                x: (pos.x - pan.x) / zoom,
+                y: (pos.y - pan.y) / zoom,
+              };
+              const snap = nearestWallSnap(worldPos, walls);
+              if (snap) {
+                snapGuideRef.current.wall = snap.wall;
+                snapGuideRef.current.snapPoint = snap.snapPoint;
+                return {
+                  x: snap.snapPoint.x * zoom + pan.x,
+                  y: snap.snapPoint.y * zoom + pan.y,
+                };
+              }
+              snapGuideRef.current.wall = null;
+              snapGuideRef.current.snapPoint = null;
+              return pos;
+            }}
+            onDragStart={(e) => {
+              e.cancelBubble = true;
+              setSelectedDeviceId(device.id);
+            }}
+            onDragMove={() => {
+              const { wall, snapPoint, wallLineNode, snapPointNode } =
+                snapGuideRef.current;
+              if (wall && snapPoint && wallLineNode && snapPointNode) {
+                const color =
+                  WALL_COLORS[wall.material] ?? theme.colors.outline;
+                wallLineNode.points([
+                  wall.start.x,
+                  wall.start.y,
+                  wall.end.x,
+                  wall.end.y,
+                ]);
+                wallLineNode.stroke(color);
+                wallLineNode.visible(true);
+                snapPointNode.x(snapPoint.x);
+                snapPointNode.y(snapPoint.y);
+                snapPointNode.fill(color);
+                snapPointNode.visible(true);
+              } else if (wallLineNode && snapPointNode) {
+                wallLineNode.visible(false);
+                snapPointNode.visible(false);
+              }
+            }}
+            onDragEnd={(e) => handleDragEnd(device.id, e)}
             onClick={(e) => {
               e.cancelBubble = true;
               setSelectedDeviceId(device.id);

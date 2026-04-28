@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { Stage } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { FloorplanImage } from "./FloorplanImage";
@@ -7,7 +7,7 @@ import { CoverageLayer } from "./CoverageLayer";
 import { DeviceLayer } from "./DeviceLayer";
 import { SnapGuideLayer } from "./SnapGuideLayer";
 import { useStore } from "../../store";
-import type { Point } from "../../types";
+import type { Point, SnapGuideState } from "../../types";
 
 interface FloorplanStageProps {
   width: number;
@@ -42,13 +42,21 @@ export function FloorplanStage({
   stageProps,
 }: FloorplanStageProps) {
   const activeTool = useStore((s) => s.activeTool);
+  const selectedDeviceId = useStore((s) => s.selectedDeviceId);
   const setSelectedDeviceId = useStore((s) => s.setSelectedDeviceId);
+  const removeDevice = useStore((s) => s.removeDevice);
   const addCalibrationPoint = useStore((s) => s.addCalibrationPoint);
   const setCalibrationPreview = useStore((s) => s.setCalibrationPreview);
   const addWallDrawPoint = useStore((s) => s.addWallDrawPoint);
   const setWallDrawPreview = useStore((s) => s.setWallDrawPreview);
   const cancelInteraction = useStore((s) => s.cancelInteraction);
 
+  const snapGuideRef = useRef<SnapGuideState>({
+    wall: null,
+    snapPoint: null,
+    wallLineNode: null,
+    snapPointNode: null,
+  });
   const handleClick = useCallback(
     (e: KonvaEventObject<MouseEvent>) => {
       const point = pointerToWorld(e);
@@ -87,17 +95,38 @@ export function FloorplanStage({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
       if (
-        e.key === "Escape" &&
-        !(e.target instanceof HTMLInputElement) &&
-        !(e.target instanceof HTMLTextAreaElement)
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        tag === "INPUT" ||
+        tag === "TEXTAREA"
       ) {
+        return;
+      }
+
+      if (e.key === "Escape") {
         cancelInteraction();
+        setSelectedDeviceId(null);
+      }
+
+      if (
+        (e.key === "Delete" || e.key === "Backspace") &&
+        activeTool === "select" &&
+        selectedDeviceId
+      ) {
+        removeDevice(selectedDeviceId);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [cancelInteraction]);
+  }, [
+    cancelInteraction,
+    setSelectedDeviceId,
+    activeTool,
+    selectedDeviceId,
+    removeDevice,
+  ]);
 
   return (
     <Stage
@@ -110,8 +139,8 @@ export function FloorplanStage({
       <FloorplanImage image={image} />
       <WallLayer />
       <CoverageLayer />
-      <DeviceLayer />
-      <SnapGuideLayer />
+      <DeviceLayer snapGuideRef={snapGuideRef} />
+      <SnapGuideLayer snapGuideRef={snapGuideRef} />
     </Stage>
   );
 }

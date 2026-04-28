@@ -1,5 +1,6 @@
 import type { StateCreator } from "zustand";
 import type { Device, DeviceType, Point } from "../types";
+import type { AppStore } from "./index";
 
 const DEVICE_DEFAULTS: Record<
   DeviceType,
@@ -16,11 +17,22 @@ export interface DevicesState {
 
 export interface DevicesActions {
   addDevice: (type: DeviceType, position: Point) => void;
+  updateDevice: (
+    id: string,
+    updates: Partial<Pick<Device, "name" | "position" | "range" | "txPower">>,
+  ) => void;
+  removeDevice: (id: string) => void;
+  duplicateDevice: (id: string) => void;
 }
 
 export type DevicesSlice = DevicesState & DevicesActions;
 
-export const createDevicesSlice: StateCreator<DevicesSlice> = (set, get) => ({
+export const createDevicesSlice: StateCreator<
+  AppStore,
+  [],
+  [],
+  DevicesSlice
+> = (set, get) => ({
   devices: [],
 
   addDevice: (type, position) => {
@@ -40,5 +52,38 @@ export const createDevicesSlice: StateCreator<DevicesSlice> = (set, get) => ({
         },
       ],
     });
+  },
+
+  updateDevice: (id, updates) => {
+    set({
+      devices: get().devices.map((d) =>
+        d.id === id ? { ...d, ...updates } : d,
+      ),
+    });
+  },
+
+  removeDevice: (id) => {
+    set({ devices: get().devices.filter((d) => d.id !== id) });
+    if (get().selectedDeviceId === id) {
+      get().setSelectedDeviceId(null);
+    }
+  },
+
+  duplicateDevice: (id) => {
+    const source = get().devices.find((d) => d.id === id);
+    if (!source) return;
+    const newId = crypto.randomUUID();
+    set({
+      devices: [
+        ...get().devices,
+        {
+          ...source,
+          id: newId,
+          name: `${source.name} (copy)`,
+          position: { x: source.position.x + 30, y: source.position.y + 30 },
+        },
+      ],
+    });
+    get().setSelectedDeviceId(newId);
   },
 });
